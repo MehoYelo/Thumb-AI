@@ -2,8 +2,6 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL!;
-
 export default function AuthPage() {
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,9 +9,10 @@ export default function AuthPage() {
   );
 
   const signInWithGoogle = async () => {
+    const origin = window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${BASE_URL}/auth/callback` },
+      options: { redirectTo: `${origin}/auth/callback` },
     });
   };
 
