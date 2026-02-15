@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { PromptBar } from "./_components/PromptBar";
 import { UserMessage } from "./_components/UserMessage";
@@ -48,7 +49,7 @@ export default function GeneratePage() {
       },
     ]);
 
-    /* ---------- 1️⃣ COMPILE ---------- */
+    /* ---------- 1️⃣ COMPILE + GENERATE ---------- */
     const compileForm = new FormData();
     compileForm.append("prompt", prompt);
     referenceImages.forEach((img) => {
@@ -60,27 +61,7 @@ export default function GeneratePage() {
       body: compileForm,
     });
 
-    const { spec } = await compileRes.json();
-
-    /* ---------- 2️⃣ GENERATE ---------- */
-    setMessages((m) =>
-      m.map((msg) =>
-        msg.id === aiId ? { ...msg, text: "Generating thumbnail… 🎨" } : msg,
-      ),
-    );
-
-    const generateForm = new FormData();
-    generateForm.append("spec", spec);
-    referenceImages.forEach((img) => {
-      generateForm.append("images", img);
-    });
-
-    const genRes = await fetch("/api/generate", {
-      method: "POST",
-      body: generateForm,
-    });
-
-    const data = await genRes.json();
+    const { spec, imageUrl } = await compileRes.json();
 
     setMessages((m) =>
       m.map((msg) =>
@@ -89,7 +70,7 @@ export default function GeneratePage() {
               id: aiId,
               role: "assistant",
               text: "Here's your thumbnail! 🎨",
-              image: data.imageUrl,
+              image: imageUrl,
               spec, // DEBUG
             }
           : msg,
@@ -104,7 +85,13 @@ export default function GeneratePage() {
       {/* Hero */}
       {messages.length === 0 && (
         <div className="mt-32 text-center">
-          <div className="mx-auto mb-4 h-12 w-12 rounded-xl bg-blue-500" />
+          <Image
+            src="/assets/bloxious-logo.png"
+            alt="Bloxious AI"
+            width={48}
+            height={48}
+            className="mx-auto mb-4 h-12 w-12"
+          />
           <h1 className="text-4xl font-bold">
             What thumbnail will you create today?
           </h1>
@@ -143,8 +130,11 @@ export default function GeneratePage() {
         <div ref={bottomRef} />
       </div>
 
+      {/* PromptBar Fade */}
+      <div className="pointer-events-none fixed bottom-0 left-65 right-0 z-40 h-24 bg-gradient-to-t from-white/90 via-white/60 to-transparent" />
+
       {/* Fixed PromptBar */}
-      <div className="fixed bottom-0 left-65 right-0 border-t bg-white/80 backdrop-blur">
+      <div className="fixed bottom-0 left-65 right-0 z-50 border-t bg-white/80 backdrop-blur">
         <div className="mx-auto w-full max-w-3xl p-4">
           <ReferenceImage
             files={referenceImages}

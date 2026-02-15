@@ -1,6 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { createBrowserClient } from "@supabase/ssr";
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL!;
 
 export default function AuthPage() {
   const supabase = createBrowserClient(
@@ -9,22 +12,27 @@ export default function AuthPage() {
   );
 
   const signInWithGoogle = async () => {
-    const origin = window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${origin}/auth/callback` },
+      options: { redirectTo: `${BASE_URL}/auth/callback` },
     });
   };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-linear-to-b from-blue-900 via-blue-700 to-blue-100 px-6">
       <div className="w-full max-w-sm rounded-2xl bg-white/10 p-8 backdrop-blur-xl shadow-xl text-center">
-        <div className="mx-auto mb-4 h-10 w-10 rounded-xl bg-blue-500" />
+        <Image
+          src="/assets/bloxious-logo.png"
+          alt="Bloxious AI"
+          width={40}
+          height={40}
+          className="mx-auto mb-4 h-10 w-10"
+        />
         <h1 className="text-2xl font-semibold text-white">
           Create your account
         </h1>
         <p className="mt-1 text-sm text-white/70">
-          Get started with RoThumbs for free
+          Get started with Bloxious AI for free
         </p>
 
         <button

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 type AssistantMessageProps = {
@@ -18,8 +19,14 @@ export function AssistantMessage({
   return (
     <div className="flex gap-3">
       {/* AI icon */}
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 text-white">
-        🤖
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm">
+        <Image
+          src="/assets/bloxious-logo.png"
+          alt="Bloxious AI"
+          width={20}
+          height={20}
+          className="h-5 w-5"
+        />
       </div>
 
       {/* Message */}

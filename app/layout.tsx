@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { CreditsModalProvider } from "@/components/billing/CreditsModalProvider";
+import { SettingsModalProvider } from "@/components/profile/SettingsModalProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <CreditsModalProvider>
+          <SettingsModalProvider>{children}</SettingsModalProvider>
+        </CreditsModalProvider>
       </body>
     </html>
   );

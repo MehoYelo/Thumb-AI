@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 type Image = {
@@ -16,6 +17,7 @@ export default function GalleryPage() {
   const [images, setImages] = useState<Image[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +27,29 @@ export default function GalleryPage() {
   useEffect(() => {
     fetchImages();
   }, []);
+
+  const downloadImage = async (image: Image) => {
+    try {
+      setDownloadError(null);
+      const response = await fetch(image.image_url);
+      if (!response.ok) {
+        throw new Error("Failed to download image");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `thumbnail-${image.id}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+      setDownloadError("Download failed. Please try again.");
+    }
+  };
 
   const fetchImages = async () => {
     try {
@@ -99,10 +124,20 @@ export default function GalleryPage() {
   return (
     <main className="min-h-screen px-6 pt-16 pb-8">
       <div className="mx-auto max-w-6xl">
-        <h1 className="text-4xl font-bold mb-2">Your Thumbnails</h1>
-        <p className="text-muted-foreground mb-8">
-          {images.length} thumbnail{images.length !== 1 ? "s" : ""}
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Your Thumbnails</h1>
+            <p className="text-muted-foreground">
+              {images.length} thumbnail{images.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link href="/generate">Back to Generate</Link>
+          </Button>
+        </div>
+        {downloadError && (
+          <p className="mb-6 text-sm text-red-500">{downloadError}</p>
+        )}
 
         {images.length === 0 ? (
           <div className="text-center py-16">
@@ -140,12 +175,7 @@ export default function GalleryPage() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      onClick={() => {
-                        const a = document.createElement("a");
-                        a.href = image.image_url;
-                        a.download = `thumbnail-${image.id}.png`;
-                        a.click();
-                      }}
+                      onClick={() => downloadImage(image)}
                     >
                       Download
                     </Button>
