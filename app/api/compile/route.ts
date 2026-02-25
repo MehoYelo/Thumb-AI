@@ -20,6 +20,7 @@ export async function POST(req: Request) {
 
     const form = await req.formData();
     const prompt = form.get("prompt");
+    const aspectRatio = (form.get("aspectRatio") as string) || "3:2";
 
     if (!prompt || typeof prompt !== "string") {
       return Response.json({ error: "Prompt required" }, { status: 400 });
@@ -29,23 +30,30 @@ export async function POST(req: Request) {
     let refImages = form.getAll("image") as File[];
 
     const systemInstructionsWithRefs = `
-You are a prompt compiler for a Roblox game thumbnail generator.
-Your output will be sent directly to an image generation model.
+Don't change literally anything, your job is only to add "!" at the end of prompt and give it as output, that's it, you're not allowed to do anything else
 
   `;
 
     const systemInstructionsNoRefs = `
-    You are a prompt compiler for a Roblox game thumbnail generator.
-Your output will be sent directly to an image generation model.
-The image was provided from our backend because user didn't upload any reference image.
-The image is a default Roblox character(also known as "Bacon") in a neutral pose.
-Your job is to compile user's prompt into a better prompt for image generation model.
+You are a prompt compiler for a Roblox game thumbnail Image generation model.
+You have to make the Image model generate the best possible thumbnail image based on the user's text prompt.
+
 Rules:
-- Always include the character in the image in the prompt by default unless user says otherwise. The character is in a neutral pose, so you can describe it as "a Roblox character in a neutral pose".
-- Never mention the game name in the thumbnail unless user says otherwise.
-- Usually the main subjects are emphasized more in the thumbnail with brighter colors, contrast, white outlines and larger size.
-
-
+- The thumbnail must be only Roblox style so must look like made in Roblox Studio, not with AI or anything else.
+- Always emphasize main subjects with contrast, size, composition, white or black outlines etc...
+- Always must be action, no static thumbnail
+- The thumbnail must be easy to understand
+- You can add arrows, texts or any other editing elements if needed for a good high CTR thumbnail
+- The face shouldn't be polished or smooth like AI made it, it should be more natural or even 2D edited face if needed
+- The background shouldn't be messy, simple and clean with good color contrast is a must
+- The face shouldn't be always smiling, make the face look more natural, you can make the reaction more extreme if needed
+- The character must not be the same but must be the same style as the reference, like you can dress or make it depending the context without changing it too much
+- Don't add too many shiny detail and reflections
+- Make sure the contrast between the character and the background is good, you can use outlines, color contrast, composition or any other technique to make the character more visible and stand out from the background but Never blur the background
+- Never blur the background
+- If you can't stop making polished character faces, you can make the face look more 2D edited like drawn or painted instead of smooth and polished, but still must look natural and not AI made
+- never make realistic background, always keep it like in game made
+- faces should be as exaggerated as possible, more extreme the better, but still must look natural and not AI made
 `;
 
     // Input content (text + optional image)
@@ -112,7 +120,7 @@ Rules:
       model: "gpt-4.1-mini",
       instructions:
         form.getAll("image").length > 0
-          ? systemInstructionsNoRefs
+          ? systemInstructionsWithRefs
           : systemInstructionsNoRefs,
       input: [
         {
@@ -142,11 +150,19 @@ Rules:
 
     const primaryRef = refImages[0];
 
+    // Map aspect ratio to image dimensions
+    const sizeMap: Record<string, "1536x1024" | "1024x1024"> = {
+      "3:2": "1536x1024",
+      "1:1": "1024x1024",
+    };
+
+    const imageSize = sizeMap[aspectRatio] || "1536x1024";
+
     const imageResponse = await client.images.edit({
       model: "gpt-image-1.5",
       image: primaryRef,
       prompt: spec,
-      size: "1536x1024",
+      size: imageSize as "1536x1024" | "1024x1024",
       quality: "medium",
     });
 

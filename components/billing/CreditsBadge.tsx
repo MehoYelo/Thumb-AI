@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useCreditsModal } from "@/components/billing/CreditsModalProvider";
 
+interface Profile {
+  credits: number;
+  plan: string;
+}
+
 export function CreditsBadge() {
   const supabase = createClient();
   const [credits, setCredits] = useState(0);
@@ -23,6 +28,25 @@ export function CreditsBadge() {
       }
     };
     load();
+
+    // Subscribe to real-time updates
+    const subscription = supabase
+      .channel("profiles")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        (payload) => {
+          if (payload.new) {
+            setCredits((payload.new as Profile).credits);
+            setPlan((payload.new as Profile).plan);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   return (
